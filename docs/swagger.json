@@ -1,0 +1,1420 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "EMERGENSH!T API",
+    "description": "API για την εφαρμογή εύρεσης τουαλετών και διαχείρισης αξιολογήσεων",
+    "contact": {
+      "name": "Your Name",
+      "email": "your.email@gmail.com"
+    },
+    "license": {
+      "name": "Apache 2.0",
+      "url": "https://www.apache.org/licenses/LICENSE-2.0.html"
+    },
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://api.toiletfinder.com/v1"
+    }
+  ],
+  "paths": {
+    "/users/register": {
+      "post": {
+        "summary": "Εγγραφή νέου χρήστη",
+        "description": "Ο χρήστης πρέπει να μπορεί να εγγραφεί στην εφαρμογή μέσω email, Google ή Facebook.\n",
+        "operationId": "registerUser",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/UserRegistration"
+        },
+        "responses": {
+          "201": {
+            "description": "Ο χρήστης εγγράφηκε επιτυχώς."
+          }
+        }
+      }
+    },
+    "/users/verify-email": {
+      "post": {
+        "summary": "Επαλήθευση email",
+        "description": "Το σύστημα πρέπει να επαληθεύει τη διεύθυνση email του χρήστη μετά την εγγραφή.\n",
+        "operationId": "verifyEmail",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/EmailVerification"
+        },
+        "responses": {
+          "200": {
+            "description": "Το email επαληθεύτηκε επιτυχώς."
+          }
+        }
+      }
+    },
+    "/users/login": {
+      "post": {
+        "summary": "Σύνδεση χρήστη",
+        "description": "Ο χρήστης πρέπει να μπορεί να συνδεθεί στον λογαριασμό του.\n",
+        "operationId": "loginUser",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/UserLogin"
+        },
+        "responses": {
+          "200": {
+            "description": "Ο χρήστης συνδέθηκε επιτυχώς."
+          }
+        }
+      }
+    },
+    "/users/{userId}": {
+      "put": {
+        "summary": "Επεξεργασία προφίλ χρήστη",
+        "description": "Ο χρήστης πρέπει να μπορεί να επεξεργαστεί το προφίλ του.\n",
+        "operationId": "editUserProfile",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/UserProfile"
+        },
+        "responses": {
+          "200": {
+            "description": "Το προφίλ ενημερώθηκε επιτυχώς."
+          }
+        }
+      }
+    },
+    "/toilets": {
+      "post": {
+        "summary": "Προσθήκη νέας τουαλέτας",
+        "description": "Ο χρήστης πρέπει να μπορεί να προσθέσει μια νέα τουαλέτα στην εφαρμογή.\n",
+        "operationId": "addToilet",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/Toilet"
+        },
+        "responses": {
+          "201": {
+            "description": "Η τουαλέτα προστέθηκε επιτυχώς."
+          }
+        }
+      }
+    },
+    "/reviews": {
+      "post": {
+        "summary": "Δημιουργία νέας αξιολόγησης",
+        "description": "Ο χρήστης πρέπει να μπορεί να δημιουργεί αξιολόγηση για μια τουαλέτα.\n",
+        "operationId": "createReview",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/Review"
+        },
+        "responses": {
+          "201": {
+            "description": "Η αξιολόγηση δημιουργήθηκε επιτυχώς."
+          }
+        }
+      },
+      "get": {
+        "summary": "Λίστα αξιολογήσεων",
+        "description": "Ο χρήστης μπορεί να δει όλες τις αξιολογήσεις που σχετίζονται με μια τουαλέτα.\n",
+        "operationId": "listReviews",
+        "parameters": [
+          {
+            "name": "toiletId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Λίστα αξιολογήσεων"
+          }
+        }
+      }
+    },
+    "/comments": {
+      "post": {
+        "summary": "Δημιουργία νέου σχολίου",
+        "description": "Ο χρήστης μπορεί να αφήσει σχόλιο σε μια αξιολόγηση.\n",
+        "operationId": "createComment",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/Comment"
+        },
+        "responses": {
+          "201": {
+            "description": "Το σχόλιο δημιουργήθηκε επιτυχώς."
+          }
+        }
+      }
+    },
+    "/likes": {
+      "post": {
+        "summary": "Like σε αξιολόγηση ή σχόλιο",
+        "description": "Ο χρήστης μπορεί να κάνει like σε αξιολόγηση ή σχόλιο.\n",
+        "operationId": "likeItem",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/Like"
+        },
+        "responses": {
+          "200": {
+            "description": "Το like καταγράφηκε επιτυχώς."
+          }
+        }
+      }
+    },
+    "/reports": {
+      "post": {
+        "summary": "Αναφορά εσφαλμένου σχολίου ή αξιολόγησης",
+        "description": "Ο χρήστης μπορεί να αναφέρει εσφαλμένο ή προσβλητικό σχόλιο/αξιολόγηση.\n",
+        "operationId": "reportItem",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/Report"
+        },
+        "responses": {
+          "200": {
+            "description": "Η αναφορά υποβλήθηκε επιτυχώς."
+          }
+        }
+      }
+    },
+    "/admin/toilets/{toiletId}/approve": {
+      "put": {
+        "summary": "Έγκριση τουαλέτας από διαχειριστή",
+        "description": "Ο διαχειριστής μπορεί να εγκρίνει τουαλέτα πριν εμφανιστεί δημόσια.\n",
+        "operationId": "approveToilet",
+        "parameters": [
+          {
+            "name": "toiletId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Η τουαλέτα εγκρίθηκε επιτυχώς."
+          }
+        }
+      }
+    },
+    "/leaderboard": {
+      "get": {
+        "summary": "Λίστα κορυφαίων χρηστών",
+        "description": "Ο χρήστης μπορεί να δει τον πίνακα κατάταξης με τους πιο ενεργούς χρήστες.\n",
+        "operationId": "getLeaderboard",
+        "responses": {
+          "200": {
+            "description": "Επιστροφή leaderboard χρηστών."
+          }
+        }
+      }
+    },
+    "/reviews/{reviewId}": {
+      "put": {
+        "summary": "Επεξεργασία αξιολόγησης",
+        "description": "Ο χρήστης μπορεί να επεξεργαστεί μια δική του αξιολόγηση.\n",
+        "operationId": "updateReview",
+        "parameters": [
+          {
+            "name": "reviewId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/Review"
+        },
+        "responses": {
+          "200": {
+            "description": "Η αξιολόγηση ενημερώθηκε επιτυχώς."
+          }
+        }
+      },
+      "delete": {
+        "summary": "Διαγραφή αξιολόγησης",
+        "description": "Ο χρήστης μπορεί να διαγράψει μια δική του αξιολόγηση.\n",
+        "operationId": "deleteReview",
+        "parameters": [
+          {
+            "name": "reviewId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Η αξιολόγηση διαγράφηκε επιτυχώς."
+          }
+        }
+      }
+    },
+    "/notifications": {
+      "get": {
+        "summary": "Λήψη ειδοποιήσεων χρήστη",
+        "description": "Ο χρήστης μπορεί να βλέπει τις ειδοποιήσεις του.\n",
+        "operationId": "getNotifications",
+        "responses": {
+          "200": {
+            "description": "Επιστροφή λίστας ειδοποιήσεων."
+          }
+        }
+      },
+      "post": {
+        "summary": "Προσθήκη ειδοποίησης",
+        "description": "Το σύστημα ή ο admin μπορεί να προσθέσει ειδοποίηση σε χρήστη.\n",
+        "operationId": "addNotification",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/Notification"
+        },
+        "responses": {
+          "201": {
+            "description": "Η ειδοποίηση προστέθηκε επιτυχώς."
+          }
+        }
+      }
+    },
+    "/toilets/recommended": {
+      "get": {
+        "summary": "Προτεινόμενες τουαλέτες για τον χρήστη",
+        "description": "Το σύστημα επιστρέφει προτεινόμενες τουαλέτες βάσει τοποθεσίας, βαθμολογίας και άλλων παραμέτρων.\n",
+        "operationId": "getRecommendedToilets",
+        "responses": {
+          "200": {
+            "description": "Λίστα προτεινόμενων τουαλετών."
+          }
+        }
+      }
+    },
+    "/user/{userid}/profile": {
+      "get": {
+        "summary": "Προβολή προφίλ χρήστη",
+        "description": "Ο χρήστης μπορεί να δει τα στοιχεία του προφίλ του.\n",
+        "operationId": "getUserProfile",
+        "responses": {
+          "200": {
+            "description": "Επιστροφή προφίλ χρήστη."
+          }
+        }
+      },
+      "put": {
+        "summary": "Ενημέρωση προφίλ χρήστη",
+        "description": "Ο χρήστης μπορεί να επεξεργαστεί τα στοιχεία του προφίλ του.\n",
+        "operationId": "updateUserProfile",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/UserProfile"
+        },
+        "responses": {
+          "200": {
+            "description": "Το προφίλ ενημερώθηκε επιτυχώς."
+          }
+        }
+      }
+    },
+    "/map": {
+      "get": {
+        "summary": "Λήψη τουαλετών στον χάρτη",
+        "description": "Το σύστημα εμφανίζει τις τουαλέτες σε διαδραστικό χάρτη με φίλτρα και επιλογές.\n",
+        "operationId": "getToiletsOnMap",
+        "parameters": [
+          {
+            "name": "lat",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "lng",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "radius",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Επιστροφή λίστας τουαλετών κοντά στη θέση."
+          }
+        }
+      }
+    },
+    "/admin/ToiletApproval": {
+      "get": {
+        "summary": "Λήψη μη εγκεκριμένων τουαλετών",
+        "description": "Ο admin βλέπει λίστα με τουαλέτες που χρειάζονται έγκριση.\n",
+        "operationId": "getPendingToilets",
+        "responses": {
+          "200": {
+            "description": "Λίστα με τουαλέτες προς έγκριση."
+          }
+        }
+      },
+      "put": {
+        "summary": "Έγκριση ή απόρριψη τουαλέτας",
+        "description": "Ο admin μπορεί να εγκρίνει ή να απορρίψει προτάσεις τουαλετών.\n",
+        "operationId": "approveToilet",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/ToiletApproval"
+        },
+        "responses": {
+          "200": {
+            "description": "Το αποτέλεσμα της έγκρισης καταχωρήθηκε."
+          }
+        }
+      }
+    },
+    "/toilet/search": {
+      "get": {
+        "summary": "Αναζήτηση τουαλετών με φίλτρα",
+        "description": "Ο χρήστης μπορεί να αναζητήσει τουαλέτες με βάση φίλτρα (π.χ. βαθμολογία, παροχές, τοποθεσία).\n",
+        "operationId": "searchToilets",
+        "parameters": [
+          {
+            "name": "lat",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "lng",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "radius",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "accessibility",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "minRating",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "hasSoap",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "isFree",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Επιτυχής αναζήτηση τουαλετών",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ToiletList"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/{username}/reviews/history": {
+      "get": {
+        "summary": "Ιστορικό αξιολογήσεων χρήστη",
+        "description": "Ο χρήστης μπορεί να δει το ιστορικό των αξιολογήσεών του.\n",
+        "operationId": "getUserReviewHistory",
+        "parameters": [
+          {
+            "name": "username",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Επιτυχής επιστροφή ιστορικού αξιολογήσεων",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserReviewHistory"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/{username}/reviews/{reviewId}": {
+      "put": {
+        "summary": "Επεξεργασία αξιολόγησης",
+        "description": "Ο χρήστης μπορεί να επεξεργαστεί μια αξιολόγηση που έχει κάνει.\n",
+        "operationId": "updateReview",
+        "parameters": [
+          {
+            "name": "username",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "reviewId",
+            "in": "path\nrequired: true",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Νέα δεδομένα αξιολόγησης",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserReview"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Επιτυχής ενημέρωση αξιολόγησης"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Διαγραφή αξιολόγησης",
+        "description": "Ο χρήστης μπορεί να διαγράψει μια αξιολόγηση που έχει κάνει.\n",
+        "operationId": "deleteReview",
+        "parameters": [
+          {
+            "name": "username",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "reviewId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Επιτυχής διαγραφή αξιολόγησης"
+          }
+        }
+      }
+    },
+    "/user/{username}/profile": {
+      "get": {
+        "summary": "Προβολή προφίλ χρήστη",
+        "description": "Ο χρήστης μπορεί να δει το προφίλ του.\n",
+        "operationId": "getUserProfile",
+        "parameters": [
+          {
+            "name": "username",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Προφίλ χρήστη",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserProfile"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/{username}/notifications": {
+      "get": {
+        "summary": "Λίστα ειδοποιήσεων",
+        "description": "Ο χρήστης λαμβάνει ειδοποιήσεις από το σύστημα.\n",
+        "operationId": "getUserNotifications",
+        "parameters": [
+          {
+            "name": "username",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Λίστα ειδοποιήσεων",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationList"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/comments/{commentId}/vote": {
+      "post": {
+        "summary": "Ψήφος σε σχόλιο (like/dislike)",
+        "description": "Οι χρήστες μπορούν να ψηφίσουν (like/dislike) σχόλια άλλων χρηστών.\n",
+        "operationId": "voteComment",
+        "parameters": [
+          {
+            "name": "commentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Επιλογή like ή dislike",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object\nproperties:\n  vote:\n    type: string\n    enum: [like, dislike]"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ψήφος καταχωρήθηκε επιτυχώς"
+          }
+        }
+      }
+    },
+    "/report": {
+      "post": {
+        "summary": "Αναφορά περιεχομένου",
+        "description": "Ο χρήστης μπορεί να αναφέρει ακατάλληλο ή ψευδές περιεχόμενο (π.χ. σχόλια ή αξιολογήσεις).\n",
+        "operationId": "reportContent",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Report"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Η αναφορά υποβλήθηκε επιτυχώς"
+          }
+        }
+      }
+    },
+    "/toilets/categories": {
+      "get": {
+        "summary": "Λίστα κατηγοριών τουαλετών",
+        "description": "Το σύστημα παρέχει κατηγορίες/ετικέτες που μπορούν να αποδοθούν στις τουαλέτες (π.χ. προσβασιμότητα, baby changing, κλπ.)\n",
+        "operationId": "getToiletCategories",
+        "responses": {
+          "200": {
+            "description": "Λίστα με διαθέσιμες κατηγορίες",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ToiletCategoryList"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/review/{reviewId}": {
+      "delete": {
+        "summary": "Διαγραφή αξιολόγησης από διαχειριστή",
+        "description": "Ο διαχειριστής μπορεί να διαγράψει αξιολόγηση χρήστη.\n",
+        "operationId": "adminDeleteReview",
+        "parameters": [
+          {
+            "name": "reviewId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Επιτυχής διαγραφή αξιολόγησης"
+          }
+        }
+      }
+    },
+    "/admin/comment/{commentId}": {
+      "delete": {
+        "summary": "Διαγραφή σχολίου από διαχειριστή",
+        "description": "Ο διαχειριστής μπορεί να διαγράψει σχόλιο χρήστη.\n",
+        "operationId": "adminDeleteComment",
+        "parameters": [
+          {
+            "name": "commentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Επιτυχής διαγραφή σχολίου"
+          }
+        }
+      }
+    },
+    "/ranking/{userId}": {
+      "get": {
+        "summary": "Προβολή κατάταξης χρήστη",
+        "description": " Επιστρέφει τη θέση του χρήστη στο σύστημα κατάταξης.\n",
+        "operationId": "getUserRanking",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "description": "Το ID του χρήστη",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Επιτυχής επιστροφή της κατάταξης του χρήστη",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserRanking"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ranking/addPoints": {
+      "post": {
+        "summary": "Προσθήκη πόντων σε χρήστη",
+        "description": " Το σύστημα προσθέτει πόντους σε έναν χρήστη (π.χ. μετά από ενέργεια)\n",
+        "operationId": "addRankingPoints",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddPointsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Επιτυχής προσθήκη πόντων",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserRanking"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/toilets/{toiletId}": {
+      "get": {
+        "summary": "Ανάκτηση πληροφοριών τουαλέτας",
+        "description": "Επιστρέφει τις λεπτομέρειες μιας τουαλέτας",
+        "operationId": "getToilet",
+        "parameters": [
+          {
+            "name": "toiletId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Πληροφορίες τουαλέτας",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Toilet"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/toilets/{toiletId}/review": {
+      "get": {
+        "summary": "Λήψη αξιολογήσεων τουαλέτας",
+        "description": "Επιστρέφει όλες τις αξιολογήσεις για συγκεκριμένη τουαλέτα",
+        "operationId": "getToiletReviews",
+        "parameters": [
+          {
+            "name": "toiletId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Λίστα αξιολογήσεων",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewList"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Προσθήκη αξιολόγησης σε τουαλέτα",
+        "description": "Ο χρήστης υποβάλει αξιολόγηση για τουαλέτα",
+        "operationId": "addToiletReview",
+        "parameters": [
+          {
+            "name": "toiletId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Review"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Δημιουργήθηκε αξιολόγηση"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Διαγραφή αξιολόγησης (admin)",
+        "description": " Ο διαχειριστής μπορεί να διαγράψει μια αξιολόγηση\n",
+        "operationId": "deleteToiletReview",
+        "parameters": [
+          {
+            "name": "toiletId",
+            "in": "path",
+            "required": "true\nschema:\n type: string"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Διαγράφηκε επιτυχώς"
+          }
+        }
+      }
+    },
+    "/toilets/{toiletId}/comment": {
+      "post": {
+        "summary": "Προσθήκη σχολίου σε τουαλέτα",
+        "description": "Ο χρήστης προσθέτει σχόλιο για συγκεκριμένη τουαλέτα",
+        "operationId": "addToiletComment",
+        "parameters": [
+          {
+            "name": "toiletId",
+            "in": "path",
+            "required": "true\nschema:\n type: string"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Comment"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Δημιουργήθηκε σχόλιο"
+          }
+        }
+      }
+    },
+    "/comments/{commentId}": {
+      "delete": {
+        "summary": "Διαγραφή σχολίου από διαχειριστή",
+        "description": " Ο διαχειριστής μπορεί να διαγράψει ένα σχόλιο\n",
+        "operationId": "deleteComment",
+        "parameters": [
+          {
+            "name": "commentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Το σχόλιο διαγράφηκε επιτυχώς"
+          }
+        }
+      }
+    },
+    "/toilets/search/categories": {
+      "get": {
+        "summary": "Αναζήτηση τουαλετών κατά κατηγορία",
+        "description": " Ο χρήστης μπορεί να αναζητήσει τουαλέτες με βάση κατηγορίες (π.χ. προσβάσιμες, με σαπούνι, δωρεάν).\n",
+        "operationId": "searchToiletsByCategory",
+        "parameters": [
+          {
+            "name": "isAccessible",
+            "in": "query",
+            "required": false,
+            "description": "Φιλτράρισμα για προσβασιμότητα σε ΑμεΑ",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "isFree",
+            "in": "query",
+            "required": false,
+            "description": "Φιλτράρισμα για δωρεάν χρήση",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "hasSoap",
+            "in": "query",
+            "required": false,
+            "description": "Φιλτράρισμα για διαθεσιμότητα σαπουνιού",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Λίστα τουαλετών που πληρούν τα κριτήρια",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ToiletList"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "UserRegistration": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string",
+            "enum": [
+              "email",
+              "google",
+              "facebook"
+            ]
+          }
+        },
+        "required": [
+          "email",
+          "password",
+          "provider"
+        ]
+      },
+      "EmailVerification": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "verificationCode": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "verificationCode"
+        ]
+      },
+      "UserLogin": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "UserProfile": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          }
+        }
+      },
+      "Toilet": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "location": {
+            "type": "object",
+            "properties": {
+              "latitude": {
+                "type": "number"
+              },
+              "longitude": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "latitude",
+              "longitude"
+            ]
+          },
+          "description": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "location"
+        ]
+      },
+      "ToiletList": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Toilet"
+        }
+      },
+      "UserReview": {
+        "type": "object",
+        "properties": {
+          "toiletId": {
+            "type": "string"
+          },
+          "rating": {
+            "type": "number"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "UserReviewHistory": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/UserReview"
+        }
+      },
+      "Report": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "targetId": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "comment",
+              "review"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "userId",
+          "targetId",
+          "type",
+          "reason"
+        ]
+      },
+      "ToiletApproval": {
+        "type": "object",
+        "properties": {
+          "toiletId": {
+            "type": "string"
+          },
+          "approved": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "toiletId",
+          "approved"
+        ]
+      },
+      "Notification": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "read": {
+            "type": "boolean"
+          }
+        }
+      },
+      "NotificationList": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Notification"
+        }
+      },
+      "ToiletCategory": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "ToiletCategoryList": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/ToiletCategory"
+        }
+      },
+      "SystemStats": {
+        "type": "object",
+        "properties": {
+          "totalUsers": {
+            "type": "integer"
+          },
+          "totalReviews": {
+            "type": "integer"
+          },
+          "totalToilets": {
+            "type": "integer"
+          },
+          "totalReports": {
+            "type": "integer"
+          },
+          "activeUsersThisWeek": {
+            "type": "integer"
+          }
+        }
+      },
+      "UserRanking": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          },
+          "currentPoints": {
+            "type": "integer"
+          },
+          "rank": {
+            "type": "integer"
+          }
+        }
+      },
+      "AddPointsRequest": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "points": {
+            "type": "integer"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "userId",
+          "points"
+        ]
+      }
+    },
+    "requestBodies": {
+      "UserRegistration": {
+        "description": "Δεδομένα εγγραφής χρήστη",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/UserRegistration"
+            }
+          }
+        },
+        "required": true
+      },
+      "EmailVerification": {
+        "description": "Δεδομένα επαλήθευσης email",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/EmailVerification"
+            }
+          }
+        },
+        "required": true
+      },
+      "UserLogin": {
+        "description": "Στοιχεία σύνδεσης χρήστη",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/UserLogin"
+            }
+          }
+        },
+        "required": true
+      },
+      "UserProfile": {
+        "description": "Δεδομένα προφίλ χρήστη",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/UserProfile"
+            }
+          }
+        },
+        "required": true
+      },
+      "Toilet": {
+        "description": "Δεδομένα νέας τουαλέτας",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Toilet"
+            }
+          }
+        },
+        "required": true
+      },
+      "Review": {
+        "type": "object",
+        "properties": {
+          "toiletId": {
+            "type": "string"
+          },
+          "rating": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "comment": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "toiletId",
+          "rating"
+        ]
+      },
+      "Comment": {
+        "type": "object",
+        "properties": {
+          "reviewId": {
+            "type": "string"
+          },
+          "comment": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reviewId",
+          "comment"
+        ]
+      },
+      "Like": {
+        "type": "object",
+        "properties": {
+          "itemId": {
+            "type": "string"
+          },
+          "itemType": {
+            "type": "string",
+            "enum": [
+              "review",
+              "comment"
+            ]
+          }
+        },
+        "required": [
+          "itemId",
+          "itemType"
+        ]
+      },
+      "Report": {
+        "type": "object",
+        "properties": {
+          "itemId": {
+            "type": "string"
+          },
+          "itemType": {
+            "type": "string",
+            "enum": [
+              "review",
+              "comment"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "itemId",
+          "itemType",
+          "reason"
+        ]
+      },
+      "ToiletApproval": {
+        "description": "Δεδομένα έγκρισης τουαλέτας",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ToiletApproval"
+            }
+          }
+        },
+        "required": true
+      }
+    }
+  }
+}
