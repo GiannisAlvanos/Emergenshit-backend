@@ -26,5 +26,15 @@
     "mongodb-memory-server": "^10.4.1",
     "nodemon": "^2.0.22",
     "supertest": "^7.1.4"
+  },
+  "jest": {
+    "coverageThreshold": {
+      "global": {
+        "branches": 80,
+        "functions": 80,
+        "lines": 80,
+        "statements": 80
+      }
+    }
   }
 }
