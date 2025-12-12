@@ -147,7 +147,7 @@ Update review (μόνο creator ή admin)
 
 DELETE /api/reviews/:id
 
-Soft delete
+Soft delete.
 
 
 
