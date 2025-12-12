@@ -1,9 +1,25 @@
+// app.js (Testing)
+require('dotenv').config(); // Πρέπει να έχετε το .env και εδώ
 const express = require("express");
 const morgan = require("morgan");
 const cors = require("cors");
 const errorHandler = require("./middleware/errorHandler");
 
-// ... (άλλα require)
+// ΝΕΑ ΠΡΟΣΘΗΚΗ: Καλεί τη σύνδεση με τη βάση δεδομένων
+const connectDB = require('./config/db');
+connectDB(); 
+
+// -------------------------------------------------------------------------
+// ΠΡΟΣΘΗΚΗ: Λογική Mock Data (Απαραίτητη αν το toiletsController τη χρησιμοποιεί)
+const mockData = require('./data/mockData'); // Υποθέτοντας ότι υπάρχει αυτό το αρχείο
+
+// Ελέγχουμε αν το περιβάλλον είναι 'test' ή αν δεν έχει οριστεί MONGODB_URI.
+// Αν και το connectDB() είναι πλέον πάνω, το toiletsController.js χρειάζεται
+// το global.MOCK για το fallback.
+if (!process.env.MONGODB_URI || process.env.NODE_ENV === 'test') {
+    global.MOCK = mockData;
+}
+// -------------------------------------------------------------------------
 
 const app = express();
 
@@ -15,7 +31,7 @@ app.use(morgan("dev"));
 // !!! ΠΡΟΣΘΗΚΗ ΤΟΥ ΑΡΧΙΚΟΥ ROUTE ΓΙΑ ΤΟ ΒΑΣΙΚΟ PATH !!!
 // ----------------------------------------------------
 app.get("/", (req, res) => {
-  res.send("Emergensh!t API is running");
+  res.send("Emergensh!t API is running");
 });
 
 app.use("/api/auth", require("./routes/auth"));
