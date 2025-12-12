@@ -1,5 +1,6 @@
-// app.js (Testing)
-require('dotenv').config(); // Πρέπει να έχετε το .env και εδώ
+// Emergenshit-backend/app.js (ή app.js του testing)
+
+require('dotenv').config(); // Πρέπει να υπάρχει για να διαβάζει το .env
 const express = require("express");
 const morgan = require("morgan");
 const cors = require("cors");
@@ -7,15 +8,26 @@ const errorHandler = require("./middleware/errorHandler");
 
 // ΝΕΑ ΠΡΟΣΘΗΚΗ: Καλεί τη σύνδεση με τη βάση δεδομένων
 const connectDB = require('./config/db');
-connectDB(); 
+
+// --- ΠΡΟΣΘΗΚΗ: Imports για τα Routes ---
+// Αυτά λείπουν από τον κώδικα που μου στείλατε προηγουμένως
+const authRoutes = require('./routes/auth');
+const toiletsRoutes = require('./routes/toilets');
+const reviewsRoutes = require('./routes/reviews');
+const searchRoutes = require('./routes/search');
+const adminRoutes = require('./routes/admin');
+// ----------------------------------------
+
+// *** ΚΡΙΣΙΜΗ ΑΛΛΑΓΗ: Συνδέουμε τη βάση δεδομένων μόνο αν ΔΕΝ είναι περιβάλλον test ***
+if (process.env.NODE_ENV !== 'test') {
+    connectDB();
+}
 
 // -------------------------------------------------------------------------
-// ΠΡΟΣΘΗΚΗ: Λογική Mock Data (Απαραίτητη αν το toiletsController τη χρησιμοποιεί)
-const mockData = require('./data/mockData'); // Υποθέτοντας ότι υπάρχει αυτό το αρχείο
+// ΠΡΟΣΘΗΚΗ: Λογική Mock Data
+const mockData = require('./data/mockData'); 
 
-// Ελέγχουμε αν το περιβάλλον είναι 'test' ή αν δεν έχει οριστεί MONGODB_URI.
-// Αν και το connectDB() είναι πλέον πάνω, το toiletsController.js χρειάζεται
-// το global.MOCK για το fallback.
+// Θέτουμε το global.MOCK αν το NODE_ENV είναι test ή αν δεν υπάρχει MONGODB_URI
 if (!process.env.MONGODB_URI || process.env.NODE_ENV === 'test') {
     global.MOCK = mockData;
 }
@@ -27,18 +39,17 @@ app.use(cors());
 app.use(express.json());
 app.use(morgan("dev"));
 
-// ----------------------------------------------------
-// !!! ΠΡΟΣΘΗΚΗ ΤΟΥ ΑΡΧΙΚΟΥ ROUTE ΓΙΑ ΤΟ ΒΑΣΙΚΟ PATH !!!
-// ----------------------------------------------------
 app.get("/", (req, res) => {
   res.send("Emergensh!t API is running");
 });
 
-app.use("/api/auth", require("./routes/auth"));
-app.use("/api/toilets", require("./routes/toilets"));
-app.use("/api/reviews", require("./routes/reviews"));
-app.use("/api/search", require("./routes/search"));
-app.use("/api/admin", require("./routes/admin"));
+// --- ΧΡΗΣΗ ΤΩΝ IMPORTS ---
+app.use('/api/auth', authRoutes);
+app.use('/api/toilets', toiletsRoutes);
+app.use('/api/reviews', reviewsRoutes);
+app.use('/api/search', searchRoutes);
+app.use('/api/admin', adminRoutes);
+// -------------------------
 
 app.use(errorHandler);
 
