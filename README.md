@@ -168,3 +168,4 @@ POST /api/admin/reject/:id
 Admin rights καθορίζονται στο JWT:
 
 role: "admin"
+.
