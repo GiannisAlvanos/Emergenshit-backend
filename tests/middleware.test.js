@@ -1,4 +1,6 @@
 const jwt = require('jsonwebtoken');
+// Υποθέτουμε ότι το auth middleware διαβάζει το secret από το process.env.JWT_SECRET
+// Για να περάσει το test στο CI, πρέπει να χρησιμοποιήσουμε το secret που έχει οριστεί στο CI env (test_secret)
 const { auth, requireRole } = require('../middleware/auth');
 
 // Mock next function
@@ -12,21 +14,27 @@ const mockRes = () => {
     return res;
 };
 
+// --- ΔΙΟΡΘΩΣΗ: Χρησιμοποιούμε το secret του CI/Test Environment ---
+const JWT_SECRET = 'test_secret'; 
+
 // Test Data
-const JWT_SECRET = 'dev_secret';
 const TEST_USER = { userId: 'u1', email: 'user@test.com', role: 'USER' };
 const ADMIN_USER = { userId: 'a1', email: 'admin@test.com', role: 'ADMIN' };
 
-// Tokens
+// Tokens (Δημιουργούνται με το σωστό secret)
 const validUserToken = jwt.sign(TEST_USER, JWT_SECRET);
 const validAdminToken = jwt.sign(ADMIN_USER, JWT_SECRET);
-const invalidToken = jwt.sign({ foo: 'bar' }, 'wrong_secret');
-const expiredToken = jwt.sign(TEST_USER, JWT_SECRET, { expiresIn: '0s' });
+// Το invalidToken χρησιμοποιεί διαφορετικό secret για να αποτύχει
+const invalidToken = jwt.sign({ foo: 'bar' }, 'wrong_secret'); 
+// Το expiredToken θα πρέπει να δημιουργείται on-the-fly ή να ρυθμιστεί σωστά, 
+// αλλά για λόγους σταθερότητας, το αφαιρούμε από εδώ και το δημιουργούμε μέσα στο test 4.
 
 
 describe('Auth Middleware', () => {
 
     beforeEach(() => {
+        // Χρειάζεται να διασφαλίσουμε ότι το process.env.JWT_SECRET είναι ρυθμισμένο για το auth middleware
+        process.env.JWT_SECRET = JWT_SECRET;
         jest.clearAllMocks(); // Καθαρίζουμε τα mock calls πριν από κάθε test
     });
 
@@ -60,10 +68,13 @@ describe('Auth Middleware', () => {
     
     // 4. Unhappy Path - Άκυρο Token (Expired)
     test('auth should return 401 for an expired token', () => {
-        // Χρειάζεται να περιμένουμε λίγο για να λήξει το token
+        // --- ΔΙΟΡΘΩΣΗ: Σωστή χρήση χρονομέτρων για να λήξει το token ---
         jest.useFakeTimers();
-        const expiredToken = jwt.sign(TEST_USER, JWT_SECRET, { expiresIn: 0 }); // Λήγει αμέσως
-        jest.advanceTimersByTime(100);
+        // Δημιουργούμε το token με expiresIn: 0, το οποίο λήγει αμέσως
+        const expiredToken = jwt.sign(TEST_USER, JWT_SECRET, { expiresIn: '0s' }); 
+        
+        // Προχωράμε τον χρόνο για να διασφαλίσουμε ότι το token έχει λήξει
+        jest.advanceTimersByTime(100); 
         
         const res = mockRes();
         const req = { headers: { authorization: `Bearer ${expiredToken}` } };
@@ -89,7 +100,7 @@ describe('Auth Middleware', () => {
 
 
 describe('RequireRole Middleware', () => {
-
+    // ... (Το requireRole middleware δεν είχε πρόβλημα, το αφήνουμε ως έχει)
     beforeEach(() => {
         jest.clearAllMocks();
     });
