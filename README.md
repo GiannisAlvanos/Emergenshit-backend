@@ -362,7 +362,7 @@ MONGODB_URI
 
 
 Production URL
-https://Emergenshit-backend.onrender.com
+https://emergenshit-backend-1.onrender.com/
 
 
 Η API είναι προσβάσιμη και επικοινωνεί κανονικά με το frontend.
