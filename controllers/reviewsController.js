@@ -1,7 +1,7 @@
 // controllers/reviewsController.js
 const { v4: uuid } = require('uuid'); // ΔΙΟΡΘΩΣΗ: Σωστή εισαγωγή από το πακέτο 'uuid'
 const Review = require('../models/Review');
-const Toilet = require('../models/Toilet');
+
 
 // ----------------------------------------------------
 // Mongoose Aggregation Logic (Shared Helper)
