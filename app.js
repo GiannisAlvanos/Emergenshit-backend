@@ -40,7 +40,7 @@ app.use(express.json());
 app.use(morgan("dev"));
 
 app.get("/", (req, res) => {
-  res.send("Emergensh!t API is running");
+  res.send("Emergensh!t API is running");
 });
 
 // --- ΧΡΗΣΗ ΤΩΝ IMPORTS ---
