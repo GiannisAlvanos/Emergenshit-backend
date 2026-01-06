@@ -6,6 +6,10 @@ const User = require("../models/User");
 const Review = require("../models/Review");
 const { v4: uuid } = require('uuid'); 
 
+jest.mock('../services/toiletAggregates.service', () => ({
+  updateMongooseAggregates: jest.fn()
+}));
+
 let userToken;
 let adminToken;
 let otherUserToken;
@@ -267,7 +271,22 @@ describe("Toilets API (Mongoose Mode)", () => {
   // 8. REMOVE (DELETE /api/toilets/:id) - Happy Path (Creator/Deactivate)
   test("8. DELETE /remove by creator deactivates toilet and resets rating (200) (Covers Line 55 reset)", async () => {
     // Setup: Create a new toilet with a review to ensure it has ratings
-    const toiletIdToDelete = uuid();
+    const { updateMongooseAggregates } = require('../services/toiletAggregates.service');
+    updateMongooseAggregates.mockImplementationOnce(async (toiletId) => {
+      const Toilet = require('../models/Toilet');
+      await Toilet.updateOne(
+        { toiletId },
+        {
+          averageRating: 0,
+          cleanlinessRating: 0,
+          layoutRating: 0,
+          spaciousnessRating: 0,
+          amenitiesRating: 0,
+          reviewCount: 0
+        }
+      );
+    });
+    const toiletIdToDelete = uuid();
     await Toilet.create({ toiletId: toiletIdToDelete, name: "Toilet with Review", location: { lat: 10, lng: 10 }, createdBy: testUserId, averageRating: 4.0, isActive: true });
     await Review.create({ toiletId: toiletIdToDelete, overallRating: 4, cleanlinessRating: 4, userId: testUserId, reviewId: uuid(), isDeleted: false });
     
@@ -314,29 +333,36 @@ describe("Toilets API (Mongoose Mode)", () => {
   });
 
   // 8.4 DELETE /remove handles internal Mongoose Aggregation error gracefully (Covers Lines 30-32 catch block)
-  test("8.4 DELETE /remove handles internal Mongoose Aggregation error gracefully (Covers Lines 30-32)", async () => {
-    // Create a fresh toilet
-    const toiletIdToError = uuid();
-    await Toilet.create({ toiletId: toiletIdToError, name: "Error Toilet", location: { lat: 11, lng: 11 }, createdBy: testUserId, isActive: true });
+  test("8.4 DELETE /remove handles internal Mongoose Aggregation error gracefully (Covers Lines 30-32)", async () => {
+    // Create a fresh toilet
+    const toiletIdToError = uuid();
+    await Toilet.create({
+      toiletId: toiletIdToError,
+      name: "Error Toilet",
+      location: { lat: 11, lng: 11 },
+      createdBy: testUserId,
+      isActive: true
+    });
 
-    // Spy on Review.aggregate and make it throw an error ONLY during the updateMongooseAggregates call
-    const aggregateSpy = jest.spyOn(Review, 'aggregate');
-    aggregateSpy.mockImplementationOnce(() => {
-        throw new Error("Mongoose Aggregation Fail during Delete");
-    });
-    
-    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    // Force aggregation service to throw
+    const { updateMongooseAggregates } = require('../services/toiletAggregates.service');
+    updateMongooseAggregates.mockImplementationOnce(() => {
+      throw new Error("Mongoose Aggregation Fail during Delete");
+    });
 
-    const res = await request(app)
-      .delete(`/api/toilets/${toiletIdToError}`)
-      .set('Authorization', `Bearer ${userToken}`);
+    // Silence console.error
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
-    expect(res.statusCode).toBe(200); 
-    expect(res.body).toHaveProperty("message", 'Deactivated');
+    const res = await request(app)
+      .delete(`/api/toilets/${toiletIdToError}`)
+      .set('Authorization', `Bearer ${userToken}`);
 
-    aggregateSpy.mockRestore();
-    consoleErrorSpy.mockRestore();
-  });
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toHaveProperty("message", 'Deactivated');
+
+    // Restore console spy ONLY
+    consoleErrorSpy.mockRestore();
+  });
 
   // 9.1. LIST Catch Block
   test("9.1 GET /list returns 500 when Mongoose query fails", async () => {

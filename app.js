@@ -1,3 +1,5 @@
+/* eslint no-unused-vars: "error" */
+
 // Emergenshit-backend/app.js (ή app.js του testing)
 
 require('dotenv').config(); // Πρέπει να υπάρχει για να διαβάζει το .env
@@ -10,7 +12,6 @@ const errorHandler = require("./middleware/errorHandler");
 const connectDB = require('./config/db');
 
 // --- ΠΡΟΣΘΗΚΗ: Imports για τα Routes ---
-// Αυτά λείπουν από τον κώδικα που μου στείλατε προηγουμένως
 const authRoutes = require('./routes/auth');
 const toiletsRoutes = require('./routes/toilets');
 const reviewsRoutes = require('./routes/reviews');
