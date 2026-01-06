@@ -10,50 +10,7 @@ const Toilet = require('../models/Toilet');
  * Υπολογίζει και ενημερώνει τα aggregated ratings (μέσος όρος, πλήθος κριτικών)
  * στο Toilet document με βάση όλες τις ενεργές κριτικές στη Mongoose DB.
  */
-const updateMongooseAggregates = async (toiletId) => {
-    try {
-        const stats = await Review.aggregate([
-            { $match: { toiletId: toiletId, isDeleted: false } },
-            { $group: {
-                _id: '$toiletId',
-                reviewCount: { $sum: 1 },
-                avgOverall: { $avg: '$overallRating' },
-                avgClean: { $avg: '$cleanlinessRating' },
-                avgLayout: { $avg: '$layoutRating' },
-                avgSpacious: { $avg: '$spaciousnessRating' },
-                avgAmenities: { $avg: '$amenitiesRating' },
-            }}
-        ]);
-    
-        if (stats.length > 0) {
-            const s = stats[0];
-            // Ενημέρωση του Toilet document με τα νέα στοιχεία
-            await Toilet.updateOne(
-                { toiletId: toiletId },
-                {
-                    reviewCount: s.reviewCount,
-                    averageRating: parseFloat(s.avgOverall.toFixed(2)),
-                    cleanlinessRating: parseFloat(s.avgClean.toFixed(2)),
-                    layoutRating: parseFloat(s.avgLayout.toFixed(2)),
-                    spaciousnessRating: parseFloat(s.avgSpacious.toFixed(2)),
-                    amenitiesRating: parseFloat(s.avgAmenities.toFixed(2)),
-                    updatedAt: new Date()
-                }
-            );
-        } else {
-            // Επαναφορά σε 0 αν δεν υπάρχουν κριτικές
-            await Toilet.updateOne(
-                { toiletId: toiletId },
-                {
-                    reviewCount: 0, averageRating: 0, cleanlinessRating: 0, layoutRating: 0,
-                    spaciousnessRating: 0, amenitiesRating: 0, updatedAt: new Date()
-                }
-            );
-        }
-    } catch (error) {
-        console.error('Error updating Mongoose Aggregates:', error);
-    }
-};
+const { updateMongooseAggregates } = require('../services/toiletAggregates.service');
 
 // ----------------------------------------------------
 // Mock Aggregation Logic (for Mock Mode only)

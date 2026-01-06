@@ -6,6 +6,10 @@ const User = require("../models/User");
 const Review = require("../models/Review");
 const { v4: uuid } = require('uuid');
 
+jest.mock('../services/toiletAggregates.service', () => ({
+    updateMongooseAggregates: jest.fn().mockResolvedValue()
+}));
+
 let userToken;
 let otherUserToken;
 let adminToken; 
