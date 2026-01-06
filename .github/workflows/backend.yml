@@ -15,6 +15,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'npm'
 
       - run: npm install
 
@@ -23,10 +24,19 @@ jobs:
         env:
           JWT_SECRET: test_secret
           NODE_ENV: test
+          # Unit tests often use mocks, but we provide a local URI just in case
+          MONGODB_URI: mongodb://localhost:27017/test_db
 
   performance-tests:
     needs: test
     runs-on: ubuntu-latest
+    
+    # This creates a fresh, isolated MongoDB instance just for this job
+    services:
+      mongodb:
+        image: mongo:6.0
+        ports:
+          - 27017:27017
 
     steps:
       - uses: actions/checkout@v4
@@ -34,6 +44,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'npm'
 
       - run: npm install
 
@@ -45,16 +56,20 @@ jobs:
           PORT: 4000
           JWT_SECRET: test_secret
           NODE_ENV: test
-          MONGODB_URI: mongodb+srv://giannisalvanos_db_user:CqjkqSW9QQGc705h@emergenshit.lbtph43.mongodb.net/Emergenshit?retryWrites=true&w=majority&appName=Emergenshit
+          # Connect to the local service container started above
+          MONGODB_URI: mongodb://localhost:27017/performance_testing
 
       - name: Wait for API
         run: |
-          for i in {1..15}; do
-            curl -f http://localhost:4000/api/toilets && exit 0
-            echo "Waiting for API..."
-            sleep 2
+          for i in {1..20}; do
+            if curl -s http://localhost:4000/api/toilets > /dev/null; then
+              echo "API is up and running!"
+              exit 0
+            fi
+            echo "Waiting for API (attempt $i)..."
+            sleep 3
           done
-          echo "API did not start"
+          echo "API did not start. Printing server logs for debugging:"
           cat server.log
           exit 1
 
@@ -84,6 +99,8 @@ jobs:
 
   deploy:
     needs: [test, performance-tests]
+    # Only deploy if tests pass AND we are on the main branch
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - name: Deploy to Render
