@@ -45,7 +45,7 @@ jobs:
           PORT: 4000
           JWT_SECRET: test_secret
           NODE_ENV: test
-          MONGODB_URI: ""
+          MONGODB_URI: mongodb+srv://giannisalvanos_db_user:CqjkqSW9QQGc705h@emergenshit.lbtph43.mongodb.net/Emergenshit?retryWrites=true&w=majority&appName=Emergenshit
 
       - name: Wait for API
         run: |
