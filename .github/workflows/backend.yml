@@ -28,8 +28,61 @@ jobs:
           JWT_SECRET: test_secret
           NODE_ENV: test
 
-  deploy:
+  # Νέο Job για τα Performance Tests με k6
+  performance-tests:
     needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Start Server in Background
+        # Χρησιμοποιούμε port 4000 για να ταιριάζει με τα k6 scripts σου
+        run: npm start &
+        env:
+          PORT: 4000
+          JWT_SECRET: test_secret
+          NODE_ENV: test
+          MONGODB_URI: "" # Αν τρέχει σε Mock Mode
+
+      - name: Wait for Server to be ready
+        run: sleep 10
+
+      - name: Run Toilets Load Test
+        uses: grafana/k6-action@v0.3.1
+        with:
+          filename: tests/performance/toilets_load_test.js
+          flags: --env API_URL=http://localhost:4000/api
+
+      - name: Run Toilets Spike Test
+        uses: grafana/k6-action@v0.3.1
+        with:
+          filename: tests/performance/toilets_spike_test.js
+          flags: --env API_URL=http://localhost:4000/api
+
+      - name: Run Reviews Load Test
+        uses: grafana/k6-action@v0.3.1
+        with:
+          filename: tests/performance/reviews_load_test.js
+          flags: --env API_URL=http://localhost:4000/api
+
+      - name: Run Reviews Spike Test
+        uses: grafana/k6-action@v0.3.1
+        with:
+          filename: tests/performance/reviews_spike_test.js
+          flags: --env API_URL=http://localhost:4000/api
+
+  deploy:
+    # Προσθέσαμε το performance-tests στα needs για να εξαρτάται το deploy από αυτά
+    needs: [test, performance-tests]
     runs-on: ubuntu-latest
 
     steps:
