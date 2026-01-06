@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1767700369694" clover="3.2.0">
-  <project timestamp="1767700369694" name="All files">
+<coverage generated="1767700604678" clover="3.2.0">
+  <project timestamp="1767700604678" name="All files">
     <metrics statements="523" coveredstatements="485" conditionals="347" coveredconditionals="273" methods="70" coveredmethods="62" elements="940" coveredelements="820" complexity="0" loc="523" ncloc="523" packages="7" files="17" classes="17"/>
     <package name="Emergenshit-backend">
       <metrics statements="29" coveredstatements="27" conditionals="6" coveredconditionals="4" methods="1" coveredmethods="0"/>
