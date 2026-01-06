@@ -9,52 +9,54 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Install dependencies
-        run: npm install
+      - run: npm install
 
-      - name: Run tests
+      - name: Run unit tests
         run: npm test
         env:
           JWT_SECRET: test_secret
           NODE_ENV: test
 
-  # Νέο Job για τα Performance Tests με k6
   performance-tests:
     needs: test
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Install dependencies
-        run: npm install
+      - run: npm install
 
-      - name: Start Server in Background
-        # Χρησιμοποιούμε port 4000 για να ταιριάζει με τα k6 scripts σου
-        run: npm start &
+      - name: Start Server
+        run: |
+          npm start > server.log 2>&1 &
+          echo $! > server.pid
         env:
           PORT: 4000
           JWT_SECRET: test_secret
           NODE_ENV: test
-          MONGODB_URI: "" # Αν τρέχει σε Mock Mode
+          MONGODB_URI: ""
 
-      - name: Wait for Server to be ready
-        run: sleep 10
+      - name: Wait for API
+        run: |
+          for i in {1..15}; do
+            curl -f http://localhost:4000/api/health && exit 0
+            echo "Waiting for API..."
+            sleep 2
+          done
+          echo "API did not start"
+          cat server.log
+          exit 1
 
       - name: Run Toilets Load Test
         uses: grafana/k6-action@v0.3.1
@@ -81,10 +83,8 @@ jobs:
           flags: --env API_URL=http://localhost:4000/api
 
   deploy:
-    # Προσθέσαμε το performance-tests στα needs για να εξαρτάται το deploy από αυτά
     needs: [test, performance-tests]
     runs-on: ubuntu-latest
-
     steps:
       - name: Deploy to Render
         run: curl -X POST ${{ secrets.RENDER_BACKEND_HOOK }}
