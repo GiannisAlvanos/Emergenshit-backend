@@ -15,7 +15,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: "npm"
+          cache: npm
 
       - run: npm install
 
@@ -42,16 +42,16 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: "npm"
+          cache: npm
 
       - run: npm install
 
-      # ✅ WAIT FOR MONGODB (GitHub Actions compatible)
+      # ✅ Wait for MongoDB (CI-safe)
       - name: Wait for MongoDB
         run: |
           for i in {1..30}; do
             if nc -z localhost 27017; then
-              echo "MongoDB is ready!"
+              echo "MongoDB is ready"
               exit 0
             fi
             echo "Waiting for MongoDB..."
@@ -60,41 +60,42 @@ jobs:
           echo "MongoDB failed to start"
           exit 1
 
-      # ✅ SEED DATABASE AFTER MONGO IS READY
+      # ✅ Seed database after Mongo is ready
       - name: Seed Database
         run: node seed.js
         env:
           MONGODB_URI: mongodb://localhost:27017/performance_testing
           NODE_ENV: test
 
-      # ✅ START API
+      # ✅ Start API server
       - name: Start Server
         run: |
           npm start > server.log 2>&1 &
-          echo $! > server.pid
+          sleep 5
+          echo "--- SERVER LOGS ---"
+          cat server.log
         env:
           PORT: 4000
           JWT_SECRET: test_secret
           NODE_ENV: test
           MONGODB_URI: mongodb://localhost:27017/performance_testing
 
-      # ✅ WAIT FOR REAL ENDPOINT (WITH TRAILING SLASH)
+      # ✅ Wait for API to be ready (uses /health endpoint)
       - name: Wait for API
         run: |
           for i in {1..30}; do
-            if curl -sf http://localhost:4000/api/toilets/ > /dev/null; then
-              echo "API is ready!"
+            if curl -sf http://localhost:4000/health > /dev/null; then
+              echo "API is ready"
               exit 0
             fi
             echo "Waiting for API (attempt $i)..."
             sleep 2
           done
           echo "API failed to start"
-          echo "--- SERVER LOGS ---"
           cat server.log
           exit 1
 
-      # ✅ K6 PERFORMANCE TESTS
+      # ✅ K6 performance tests
       - name: Run Toilets Load Test
         uses: grafana/k6-action@v0.3.1
         with:
@@ -119,7 +120,7 @@ jobs:
           filename: tests/performance/reviews_spike_test.js
           flags: --env API_URL=http://localhost:4000/api
 
-      # ✅ ALWAYS SHOW LOGS IF ANY TEST FAILS
+      # ✅ Dump server logs if any test fails
       - name: Dump server logs on failure
         if: failure()
         run: cat server.log
