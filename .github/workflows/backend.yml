@@ -2,36 +2,136 @@ name: Backend CI/CD
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   test:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
 
-      - name: Install dependencies
-        run: npm install
+      - run: npm install
 
-      - name: Run tests
+      - name: Run unit tests
         run: npm test
         env:
           JWT_SECRET: test_secret
           NODE_ENV: test
+          MONGODB_URI: mongodb://127.0.0.1:27017/unittest_db
 
-  deploy:
+  performance-tests:
     needs: test
     runs-on: ubuntu-latest
 
+    services:
+      mongodb:
+        image: mongo:6.0
+        ports:
+          - 27017:27017
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm install
+
+      # ✅ Step 1: Wait for MongoDB
+      - name: Wait for MongoDB
+        run: |
+          for i in {1..30}; do
+            if nc -z localhost 27017; then
+              echo "MongoDB is ready"
+              exit 0
+            fi
+            echo "Waiting for MongoDB..."
+            sleep 2
+          done
+          exit 1
+
+      # ✅ Step 2 + 3: Seed, Start API, Health Check & k6 Tests
+      - name: Seed, Start API & Run Performance Tests
+        run: |
+          # Install k6
+          sudo apt-get update
+          sudo apt-get install -y gnupg software-properties-common
+          curl -fsSL https://dl.k6.io/key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/k6-archive-keyring.gpg
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install -y k6
+
+          export MONGODB_URI="mongodb://127.0.0.1:27017/performance_testing"
+          export NODE_ENV=performance
+          export PORT=4000
+          export JWT_SECRET=test_secret
+
+          echo "🌱 Seeding Database..."
+          node seed.js
+
+          sleep 2
+
+          echo "🚀 Starting Server..."
+          npm start > server.log 2>&1 &
+          SERVER_PID=$!
+          
+          sleep 2
+        
+
+          echo "🔍 Checking API Health..."
+          for i in {1..30}; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:4000/api/toilets || echo "000")
+
+            if [ "$STATUS" -eq 200 ]; then
+              echo "✅ API is ready!"
+              break
+            fi
+
+            if ! kill -0 $SERVER_PID 2>/dev/null; then
+              echo "❌ Server crashed"
+              cat server.log
+              exit 1
+            fi
+
+            echo "Waiting... (status $STATUS)"
+            sleep 3
+          done
+
+          if [ "$STATUS" -ne 200 ]; then
+            echo "❌ API never became ready"
+            cat server.log
+            exit 1
+          fi
+
+          echo "🔥 Running k6 Load Test..."
+          k6 run --env API_URL=http://localhost:4000/api tests/performance/toilets_load_test.js
+
+          echo "⚡ Running k6 Spike Test..."
+          k6 run --env API_URL=http://localhost:4000/api tests/performance/toilets_spike_test.js
+
+        env:
+          MONGODB_URI: mongodb://127.0.0.1:27017/performance_testing
+          NODE_ENV: performance
+          PORT: 4000
+          JWT_SECRET: test_secret
+
+      - name: Dump server logs on failure
+        if: failure()
+        run: cat server.log
+
+  deploy:
+    needs: [test, performance-tests]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
     steps:
       - name: Deploy to Render
         run: curl -X POST ${{ secrets.RENDER_BACKEND_HOOK }}
