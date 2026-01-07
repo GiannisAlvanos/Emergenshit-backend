@@ -24,14 +24,12 @@ jobs:
         env:
           JWT_SECRET: test_secret
           NODE_ENV: test
-          # Unit tests often use mocks, but we provide a local URI just in case
           MONGODB_URI: mongodb://localhost:27017/test_db
 
   performance-tests:
     needs: test
     runs-on: ubuntu-latest
     
-    # This creates a fresh, isolated MongoDB instance just for this job
     services:
       mongodb:
         image: mongo:6.0
@@ -48,6 +46,12 @@ jobs:
 
       - run: npm install
 
+      - name: Seed Database
+        run: npm run seed
+        env:
+          MONGODB_URI: mongodb://localhost:27017/performance_testing
+          NODE_ENV: test
+
       - name: Start Server
         run: |
           npm start > server.log 2>&1 &
@@ -56,7 +60,6 @@ jobs:
           PORT: 4000
           JWT_SECRET: test_secret
           NODE_ENV: test
-          # Connect to the local service container started above
           MONGODB_URI: mongodb://localhost:27017/performance_testing
 
       - name: Wait for API
@@ -99,7 +102,6 @@ jobs:
 
   deploy:
     needs: [test, performance-tests]
-    # Only deploy if tests pass AND we are on the main branch
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
