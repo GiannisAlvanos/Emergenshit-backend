@@ -46,7 +46,7 @@ jobs:
 
       - run: npm install
 
-      # ✅ Step 1: Wait for the MongoDB Container to be healthy
+      # ✅ Step 1: Wait for MongoDB
       - name: Wait for MongoDB
         run: |
           for i in {1..30}; do
@@ -59,27 +59,37 @@ jobs:
           done
           exit 1
 
-      # ✅ Step 2: Combined Seed + Start + Health Check
+      # ✅ Step 2: Seed, Start Server, and Health Check
       - name: Seed Database and Start API
         run: |
+          # We use NODE_ENV=production or performance so app.js calls connectDB()
+          export MONGODB_URI="mongodb://127.0.0.1:27017/performance_testing"
+          export NODE_ENV=performance
+          export PORT=4000
+          export JWT_SECRET=test_secret
+
           echo "🌱 Seeding Database..."
           node seed.js
+
+          sleep 2
           
           echo "🚀 Starting Server..."
           npm start > server.log 2>&1 &
           SERVER_PID=$!
+
+          sleep 2
           
           echo "🔍 Checking API Health (Waiting for 200 OK)..."
           for i in {1..30}; do
-            # We use 127.0.0.1 to avoid IPv6 issues
+            # We check the specific toilets endpoint
             STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:4000/api/toilets || echo "000")
             
             if [ "$STATUS" -eq 200 ]; then
-              echo "✅ API is ready and Seeded!"
+              echo "✅ API is ready and connected to MongoDB!"
               exit 0
             fi
             
-            # Crash early if the process died (helps debug Mongoose connection issues)
+            # Check if the process crashed
             if ! kill -0 $SERVER_PID 2>/dev/null; then
               echo "❌ Server process died!"
               cat server.log
@@ -90,14 +100,12 @@ jobs:
             sleep 3
           done
           
-          echo "❌ API timed out"
+          echo "❌ API failed health check"
           cat server.log
           exit 1
         env:
-          PORT: 4000
-          JWT_SECRET: test_secret
-          NODE_ENV: test
           MONGODB_URI: mongodb://127.0.0.1:27017/performance_testing
+          NODE_ENV: performance
 
       # ✅ Step 3: k6 tests
       - name: Run Toilets Load Test
