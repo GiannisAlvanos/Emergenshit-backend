@@ -11,14 +11,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
-
       - run: npm install
-
       - name: Run unit tests
         run: npm test
         env:
@@ -38,87 +35,69 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
 
-      - run: npm install
+      - name: Install Dependencies
+        run: npm install
 
-      # ✅ Step 1: Wait for MongoDB
-      - name: Wait for MongoDB
+      # Εγκατάσταση του k6 στο runner
+      - name: Install k6
         run: |
-          for i in {1..30}; do
-            if nc -z localhost 27017; then
-              echo "MongoDB is ready"
-              exit 0
-            fi
-            echo "Waiting for MongoDB..."
-            sleep 2
-          done
-          exit 1
+          sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install k6
 
-      # ✅ Step 2: Seed, Start Server, and Health Check
-      - name: Seed Database and Start API
+      # ✅ Όλα σε ένα step: Seed + Start + Health Check + Tests
+      - name: Seed, Start API and Run Performance Tests
         run: |
-          # We use NODE_ENV=production or performance so app.js calls connectDB()
           export MONGODB_URI="mongodb://127.0.0.1:27017/performance_testing"
           export NODE_ENV=performance
           export PORT=4000
           export JWT_SECRET=test_secret
+          export API_URL="http://127.0.0.1:4000/api"
 
           echo "🌱 Seeding Database..."
           node seed.js
-
-          sleep 2
           
           echo "🚀 Starting Server..."
           npm start > server.log 2>&1 &
           SERVER_PID=$!
-
-          sleep 2
           
-          echo "🔍 Checking API Health (Waiting for 200 OK)..."
+          echo "🔍 Waiting for API to be ready (200 OK)..."
           for i in {1..30}; do
-            # We check the specific toilets endpoint
             STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:4000/api/toilets || echo "000")
-            
             if [ "$STATUS" -eq 200 ]; then
-              echo "✅ API is ready and connected to MongoDB!"
-              exit 0
+              echo "✅ API is ready and connected!"
+              break
             fi
-            
-            # Check if the process crashed
             if ! kill -0 $SERVER_PID 2>/dev/null; then
-              echo "❌ Server process died!"
+              echo "❌ Server crashed!"
               cat server.log
               exit 1
             fi
-            
             echo "Waiting... (Status: $STATUS, attempt $i)"
             sleep 3
+            if [ $i -eq 30 ]; then
+              echo "❌ Timeout waiting for API"
+              exit 1
+            fi
           done
-          
-          echo "❌ API failed health check"
-          cat server.log
-          exit 1
+
+          echo "📊 Running k6 Load Test..."
+          k6 run tests/performance/toilets_load_test.js --env API_URL=$API_URL
+
+          echo "💥 Running k6 Spike Test..."
+          k6 run tests/performance/toilets_spike_test.js --env API_URL=$API_URL
+
+          # Κλείνουμε τον server στο τέλος
+          kill $SERVER_PID
         env:
           MONGODB_URI: mongodb://127.0.0.1:27017/performance_testing
           NODE_ENV: performance
-
-      # ✅ Step 3: k6 tests
-      - name: Run Toilets Load Test
-        uses: grafana/k6-action@v0.3.1
-        with:
-          filename: tests/performance/toilets_load_test.js
-          flags: --env API_URL=http://localhost:4000/api
-
-      - name: Run Toilets Spike Test
-        uses: grafana/k6-action@v0.3.1
-        with:
-          filename: tests/performance/toilets_spike_test.js
-          flags: --env API_URL=http://localhost:4000/api
 
       - name: Dump server logs on failure
         if: failure()
