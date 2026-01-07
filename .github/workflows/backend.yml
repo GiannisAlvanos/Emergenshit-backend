@@ -24,12 +24,13 @@ jobs:
         env:
           JWT_SECRET: test_secret
           NODE_ENV: test
-          MONGODB_URI: mongodb://localhost:27017/test_db
+          MONGODB_URI: mongodb://localhost:27017/unittest_db
 
   performance-tests:
     needs: test
     runs-on: ubuntu-latest
     
+    # Creates a local, disposable MongoDB instance
     services:
       mongodb:
         image: mongo:6.0
@@ -46,8 +47,9 @@ jobs:
 
       - run: npm install
 
+      # Using 'node seed.js' directly to ensure it runs regardless of package.json scripts
       - name: Seed Database
-        run: npm run seed
+        run: node seed.js
         env:
           MONGODB_URI: mongodb://localhost:27017/performance_testing
           NODE_ENV: test
