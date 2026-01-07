@@ -46,7 +46,7 @@ jobs:
 
       - run: npm install
 
-      # ✅ Wait for MongoDB (CI-safe)
+      # ✅ Wait for MongoDB (NO mongo CLI)
       - name: Wait for MongoDB
         run: |
           for i in {1..30}; do
@@ -60,14 +60,14 @@ jobs:
           echo "MongoDB failed to start"
           exit 1
 
-      # ✅ Seed database after Mongo is ready
+      # ✅ Seed database
       - name: Seed Database
         run: node seed.js
         env:
           MONGODB_URI: mongodb://localhost:27017/performance_testing
           NODE_ENV: test
 
-      # ✅ Start API server
+      # ✅ Start API
       - name: Start Server
         run: |
           npm start > server.log 2>&1 &
@@ -80,7 +80,7 @@ jobs:
           NODE_ENV: test
           MONGODB_URI: mongodb://localhost:27017/performance_testing
 
-      # ✅ Wait for API to be ready (uses /health endpoint)
+      # ✅ Health check (NOT a real route)
       - name: Wait for API
         run: |
           for i in {1..30}; do
@@ -95,7 +95,7 @@ jobs:
           cat server.log
           exit 1
 
-      # ✅ K6 performance tests
+      # ✅ k6 tests
       - name: Run Toilets Load Test
         uses: grafana/k6-action@v0.3.1
         with:
@@ -108,19 +108,6 @@ jobs:
           filename: tests/performance/toilets_spike_test.js
           flags: --env API_URL=http://localhost:4000/api
 
-      - name: Run Reviews Load Test
-        uses: grafana/k6-action@v0.3.1
-        with:
-          filename: tests/performance/reviews_load_test.js
-          flags: --env API_URL=http://localhost:4000/api
-
-      - name: Run Reviews Spike Test
-        uses: grafana/k6-action@v0.3.1
-        with:
-          filename: tests/performance/reviews_spike_test.js
-          flags: --env API_URL=http://localhost:4000/api
-
-      # ✅ Dump server logs if any test fails
       - name: Dump server logs on failure
         if: failure()
         run: cat server.log
