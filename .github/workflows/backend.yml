@@ -46,7 +46,7 @@ jobs:
 
       - run: npm install
 
-      # ✅ Wait for MongoDB
+      # ✅ Step 1: Wait for the MongoDB Container to be healthy
       - name: Wait for MongoDB
         run: |
           for i in {1..30}; do
@@ -57,46 +57,49 @@ jobs:
             echo "Waiting for MongoDB..."
             sleep 2
           done
-          echo "MongoDB failed to start"
           exit 1
 
-      # ✅ Seed database
-      - name: Seed Database
-        run: node seed.js
-        env:
-          MONGODB_URI: mongodb://127.0.0.1:27017/performance_testing
-          NODE_ENV: test
-
-      # ✅ Start API (Using nohup and disown to prevent process cleanup)
-      - name: Start Server
+      # ✅ Step 2: Combined Seed + Start + Health Check
+      - name: Seed Database and Start API
         run: |
-          nohup npm start > server.log 2>&1 &
-          disown -a
+          echo "🌱 Seeding Database..."
+          node seed.js
+          
+          echo "🚀 Starting Server..."
+          npm start > server.log 2>&1 &
+          SERVER_PID=$!
+          
+          echo "🔍 Checking API Health (Waiting for 200 OK)..."
+          for i in {1..30}; do
+            # We use 127.0.0.1 to avoid IPv6 issues
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:4000/api/toilets || echo "000")
+            
+            if [ "$STATUS" -eq 200 ]; then
+              echo "✅ API is ready and Seeded!"
+              exit 0
+            fi
+            
+            # Crash early if the process died (helps debug Mongoose connection issues)
+            if ! kill -0 $SERVER_PID 2>/dev/null; then
+              echo "❌ Server process died!"
+              cat server.log
+              exit 1
+            fi
+            
+            echo "Waiting... (Status: $STATUS, attempt $i)"
+            sleep 3
+          done
+          
+          echo "❌ API timed out"
+          cat server.log
+          exit 1
         env:
           PORT: 4000
           JWT_SECRET: test_secret
           NODE_ENV: test
           MONGODB_URI: mongodb://127.0.0.1:27017/performance_testing
 
-      # ✅ Wait for API (Specifically checking for HTTP 200)
-      - name: Wait for API
-        run: |
-          echo "Checking if server is responding with 200 OK..."
-          for i in {1..30}; do
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:4000/api/toilets)
-            if [ "$STATUS" -eq 200 ]; then
-              echo "API is ready and responding!"
-              exit 0
-            fi
-            echo "Waiting for API (Current Status: $STATUS) (attempt $i)..."
-            sleep 3
-          done
-          echo "ERROR: API failed to return 200 OK"
-          echo "--- LAST 50 LINES OF SERVER LOG ---"
-          tail -n 50 server.log
-          exit 1
-
-      # ✅ k6 tests
+      # ✅ Step 3: k6 tests
       - name: Run Toilets Load Test
         uses: grafana/k6-action@v0.3.1
         with:
@@ -109,12 +112,9 @@ jobs:
           filename: tests/performance/toilets_spike_test.js
           flags: --env API_URL=http://localhost:4000/api
 
-      # ✅ Debugging: Dumps logs automatically if any previous step fails
       - name: Dump server logs on failure
         if: failure()
-        run: |
-          echo "--- FULL SERVER LOGS ---"
-          cat server.log
+        run: cat server.log
 
   deploy:
     needs: [test, performance-tests]
