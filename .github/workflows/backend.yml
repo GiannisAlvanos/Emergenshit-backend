@@ -46,7 +46,7 @@ jobs:
 
       - run: npm install
 
-      # ✅ Wait for MongoDB (NO mongo CLI)
+      # ✅ Wait for MongoDB
       - name: Wait for MongoDB
         run: |
           for i in {1..30}; do
@@ -57,42 +57,42 @@ jobs:
             echo "Waiting for MongoDB..."
             sleep 2
           done
-          echo "MongoDB failed to start"
           exit 1
 
-      # ✅ Seed database
+      # ✅ Seed database (This is a one-time script, it should finish)
       - name: Seed Database
         run: node seed.js
         env:
           MONGODB_URI: mongodb://localhost:27017/performance_testing
           NODE_ENV: test
 
-      # ✅ Start API
+      # ✅ Start API (Using nohup and disown to prevent GitHub from killing it)
       - name: Start Server
         run: |
-          npm start > server.log 2>&1 &
-          sleep 5
-          echo "--- SERVER LOGS ---"
-          cat server.log
+          nohup npm start > server.log 2>&1 &
+          disown -a
         env:
           PORT: 4000
           JWT_SECRET: test_secret
           NODE_ENV: test
           MONGODB_URI: mongodb://localhost:27017/performance_testing
 
-      # ✅ Health check (NOT a real route)
+      # ✅ Wait for API (Verifying the server stayed alive)
       - name: Wait for API
         run: |
+          echo "Checking if server is responding..."
           for i in {1..30}; do
-            if curl -sf http://localhost:4000/api/toilets > /dev/null; then
-              echo "API is ready"
+            # We use -v to see more detail if it fails
+            if curl -s http://localhost:4000/api/toilets > /dev/null; then
+              echo "API is ready and responding!"
               exit 0
             fi
             echo "Waiting for API (attempt $i)..."
-            sleep 2
+            sleep 3
           done
-          echo "API failed to start"
-          cat server.log
+          echo "ERROR: API failed to start or was killed."
+          echo "--- LAST 20 LINES OF SERVER LOG ---"
+          tail -n 20 server.log
           exit 1
 
       # ✅ k6 tests
@@ -110,7 +110,9 @@ jobs:
 
       - name: Dump server logs on failure
         if: failure()
-        run: cat server.log
+        run: |
+          echo "Full Server Logs:"
+          cat server.log
 
   deploy:
     needs: [test, performance-tests]
