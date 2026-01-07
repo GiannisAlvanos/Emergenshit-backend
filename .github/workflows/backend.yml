@@ -118,6 +118,12 @@ jobs:
           echo "⚡ Running k6 Spike Test..."
           k6 run --env API_URL=http://localhost:4000/api tests/performance/toilets_spike_test.js
 
+          echo "🔥 Running k6 Load Test..."
+          k6 run --env API_URL=http://localhost:4000/api tests/performance/toilets_load_test.js
+
+          echo "⚡ Running k6 Spike Test..."
+          k6 run --env API_URL=http://localhost:4000/api tests/performance/reviews_spike_test.js
+
         env:
           MONGODB_URI: mongodb://127.0.0.1:27017/performance_testing
           NODE_ENV: performance
